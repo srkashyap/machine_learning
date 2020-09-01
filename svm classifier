@@ -1,0 +1,115 @@
+import numpy as np
+from sklearn.svm import SVC
+from sklearn.model_selection import KFold
+import kaggle
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+
+
+# In[2]:
+
+
+################################################################
+# load currency data
+def load_currency_data():
+    train_x = np.load('../../Data/Currency/train_x.npy')
+    train_y = np.load('../../Data/Currency/train_y.npy')
+    test_x = np.load('../../Data/Currency/test_x.npy')
+    return train_x, train_y, test_x
+################################################################
+
+
+# In[3]:
+
+
+train_x, train_y, test_x  = load_currency_data()
+print('Train=', train_x.shape)
+print('Test=', test_x.shape)
+
+
+# In[4]:
+
+
+c = [0.5,0.05,0.0005]
+gamma_values = [1,0.01,0.001]
+n_splits=5
+kf=KFold(n_splits=5)
+k = ['linear', 'poly', 'rbf']
+degree = [3,5]
+  
+
+
+# In[5]:
+
+
+################################################################
+       #training svm model
+################################################################
+
+acc = []
+for j in k:
+    #print(j)
+    accuracies = []
+    
+    if j == "poly":
+        for d in degree:
+            print("poly",d)
+            for i in c:
+                print(i)
+                for g in gamma_values:
+                    accuracy = 0
+                    svm_clf = SVC(C= i, kernel = j, degree = d, gamma = g)
+                    print(g)
+                    for train_index,test_index in kf.split(train_x):
+                        x1 = train_x[train_index]
+                        y1 = train_y[train_index]
+
+                        x2 = train_x[test_index]
+                        y2 = train_y[test_index]
+
+                        svm_clf.fit(x1,y1)
+                        predicted_y = svm_clf.predict(x2)
+                        accuracy += accuracy_score(y2, predicted_y, normalize=True)
+                    avg_accuracy = accuracy/ n_splits
+                    accuracies.append(avg_accuracy)
+                    print(avg_accuracy)
+                
+
+                #accuracies.append(min(accuracies))
+            print(accuracies)
+            acc.append(accuracies)
+
+    else:
+        print(j)
+        for i in c:
+            print(i)
+            for g in gamma_values:
+                accuracy = 0
+                svm_clf = SVC(C= i, kernel = j, gamma = g)
+                print(g)
+                for train_index,test_index in kf.split(train_x):
+                    x1 = train_x[train_index]
+                    y1 = train_y[train_index]
+
+                    x2 = train_x[test_index]
+                    y2 = train_y[test_index]
+
+                    svm_clf.fit(x1,y1)
+                    predicted_y = svm_clf.predict(x2)
+                    accuracy += accuracy_score(y2, predicted_y, normalize=True)
+                avg_accuracy = accuracy/ n_splits
+                accuracies.append(avg_accuracy)
+                print(avg_accuracy)
+
+
+            #accuracies.append(min(accuracies))
+        print(accuracies)
+        acc.append(accuracies)
+
+
+# In[7]:
+
+
+svm_clf = SVC(C= 0.5, kernel = 'poly', degree = 3, gamma = 1)
+svm_clf.fit(train_x,train_y)
+predicted_y = svm_clf.predict(test_x)
